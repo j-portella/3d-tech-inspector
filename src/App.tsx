@@ -76,6 +76,11 @@ export default function App() {
           <DetailPanel />
         </div>
       )}
+
+      {/* 5. Crédito de autoria — discreto, canto inferior esquerdo */}
+      <div className="absolute bottom-4 left-4 z-30 text-[10px] font-medium text-slate-500 tracking-wide pointer-events-none select-none">
+        Criado por Juliano Portella
+      </div>
     </div>
   );
 }
