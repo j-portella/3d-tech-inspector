@@ -1,10 +1,20 @@
 // src/components/ui/HandTracker.tsx
 import { useEffect, useRef, useState } from 'react';
-import { Hands, HAND_CONNECTIONS } from '@mediapipe/hands';
-import type { Results } from '@mediapipe/hands';
-import { Camera } from '@mediapipe/camera_utils';
+import type { Results, Hands as HandsType } from '@mediapipe/hands';
 import { useInspectorStore } from '../../store/useInspectorStore';
 import { useCameraCommandStore } from '../../store/useCameraCommandStore';
+
+// Hands, HAND_CONNECTIONS e Camera vêm de <script> em index.html (globais em
+// window), não de import de módulo — o pacote @mediapipe/hands quebra
+// especificamente em build de produção do Vite quando importado como ESM
+// ("X.Hands is not a constructor"). Só o TIPO é importado acima (apagado
+// no build, não tem esse problema).
+const Hands = (window as any).Hands as new (config: { locateFile: (file: string) => string }) => HandsType;
+const HAND_CONNECTIONS = (window as any).HAND_CONNECTIONS as [number, number][];
+const Camera = (window as any).Camera as new (
+  videoElement: HTMLVideoElement,
+  config: { onFrame: () => Promise<void>; width: number; height: number }
+) => { start: () => Promise<void>; stop: () => void };
 
 // Apelidos por voz para cada componente (normalizados: minúsculas, sem acento).
 // Cobrem o nome completo, variações curtas e a tecnologia, pra reconhecer
@@ -244,7 +254,16 @@ export function HandTracker() {
   useEffect(() => {
     if (!videoRef.current || !fullCanvasRef.current || !isActive) return;
 
-    let hands: Hands | null = null;
+    // Defesa: se o <script> do CDN (index.html) ainda não carregou quando
+    // este efeito roda (internet lenta, bloqueador de anúncio, etc.), Hands
+    // e Camera vêm undefined — sem essa checagem, o erro seria um crash
+    // confuso em vez de uma mensagem clara.
+    if (typeof Hands !== 'function' || typeof Camera !== 'function') {
+      setVisionError('Biblioteca de rastreamento de mão não carregou (verifique a conexão e recarregue a página).');
+      return;
+    }
+
+    let hands: HandsType | null = null;
 
     // Inicialização do MediaPipe Hands pode falhar (ex: falha ao buscar o
     // WASM do CDN). Sem isso, a falha ficava silenciosa e a mão nunca
