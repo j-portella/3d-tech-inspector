@@ -5,6 +5,14 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>it-3d-inspector</title>
+    <!-- @mediapipe/hands e @mediapipe/camera_utils carregados via <script>
+         em vez de import de módulo ES: esses pacotes não empacotam bem com
+         o Rollup/Vite em build de produção (o construtor `Hands` vinha
+         quebrado, erro "X.Hands is not a constructor" só em produção,
+         nunca em dev). Carregar assim é o jeito recomendado oficialmente
+         pelo MediaPipe e evita o problema de vez. -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
   </head>
   <body>
     <div id="root"></div>
